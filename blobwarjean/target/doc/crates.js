@@ -1,1 +1,0 @@
-window.ALL_CRATES = ["bitflags","blobwar","blobwar_iterative_deepening","byteorder","cfg_if","client","either","glob","itertools","itoa","libc","nix","proc_macro2","quote","ryu","serde","serde_derive","serde_json","server","syn","term","unicode_xid","void"];

@@ -1,1 +1,0 @@
-initSidebarItems({"mod":[["board","Board related features. Provides the `Board` structure storing holes."],["configuration","Provide a `Configuration` for storing game state ; a `Movement` for storing moves to play."],["strategy","We provide here structs for all possible kinds of players and AI."]]});

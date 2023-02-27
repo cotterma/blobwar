@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Human","Let a human enter moves on stdin."]]});

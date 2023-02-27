@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["NetworkPlayer","Let a remote client enter moves."]]});

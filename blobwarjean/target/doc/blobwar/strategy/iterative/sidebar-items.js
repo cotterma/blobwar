@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["IterativeStrategy","All possible strategies for iterative deepening."]],"struct":[["IterativeDeepening","Anytime algorithms strategies. Implemented in another process."]]});
