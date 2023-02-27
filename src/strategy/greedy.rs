@@ -19,19 +19,6 @@ impl fmt::Display for Greedy {
 
 impl Strategy for Greedy {
     fn compute_next_move(&mut self, state: &Configuration) -> Option<Movement> {
-        // let mut movement:Option<Movement>;
-        // let mut max:i8=-INT_MAX as i8;
-        // for m in state.movements(){
-        //     let new_configuration:Configuration = state.clone();
-        //     let owned_movement = m.clone();
-        //     new_configuration.play(&owned_movement);
-        //     let value:i8=new_configuration.value();
-        //     if(value>max){
-        //         movement=Some(owned_movement);
-        //         max=value;
-        //     } 
-        // }
-        // println!("greedy {}", state.current_player);
         return state.movements().max_by_key(|movement| state.play(movement).value());
     }
 }
