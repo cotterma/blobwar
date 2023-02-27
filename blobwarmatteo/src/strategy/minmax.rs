@@ -3,8 +3,8 @@ use super::Strategy;
 use crate::configuration::{Configuration, Movement};
 use crate::shmem::AtomicMove;
 use std::fmt;
-use std::ptr::null;
-use std::u8::MAX;
+use rayon::iter::ParallelBridge;
+use rayon::prelude::ParallelIterator;
 
 /// Min-Max algorithm with a given recursion depth.
 pub struct MinMax(pub u8);
@@ -13,7 +13,7 @@ impl Strategy for MinMax {
     fn compute_next_move(&mut self, state: &Configuration) -> Option<Movement> {
         let depth:u8 = self.0;
         let player:bool=state.current_player;
-        return state.movements().max_by_key(|movement| minmax_recursif(&state.play(movement), depth-1, player, depth));
+        return state.movements().par_bridge().max_by_key(|movement| minmax_recursif(&state.play(movement), depth-1, player, depth));
     }   
 }
 
@@ -27,7 +27,7 @@ fn minmax_recursif(state: &Configuration, depth: u8, player:bool, base_depth:u8)
     if depth==0 || state.movements().peekable().peek().is_none(){
         return state.value();
     }
-    return -state.movements().map(|movement| minmax_recursif(&state.play(&movement), depth-1, player, base_depth)).max().unwrap();
+    return -state.movements().par_bridge().map(|movement| minmax_recursif(&state.play(&movement), depth-1, player, base_depth)).max().unwrap();
 }
 
 /// Anytime min max algorithm.

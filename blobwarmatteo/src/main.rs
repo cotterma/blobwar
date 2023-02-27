@@ -7,5 +7,5 @@ fn main() {
     //let board = Board::load("x").expect("failed loading board");
     let board = Default::default();
     let mut game = Configuration::new(&board);
-    game.battle(MinMax(4), MinMax(2));
+    game.battle(MinMax(5), MinMax(2));
 }
