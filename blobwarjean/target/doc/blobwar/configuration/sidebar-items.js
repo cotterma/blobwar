@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Movement","Movements : clone some blob or jump"]],"struct":[["Configuration","Game state. We know, who should play, what is the board and where every blob is located."]]});

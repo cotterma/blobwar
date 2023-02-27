@@ -1,0 +1,106 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Provide helpers for making ioctl system calls"><meta name="keywords" content="rust, rustlang, rust-lang, ioctl"><title>nix::sys::ioctl - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><script defer src="../../../main.js"></script>
+    <noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../../../nix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
+        </a><h2 class="location"></h2>
+    </nav>
+    <nav class="sidebar"><a class="sidebar-logo" href="../../../nix/index.html"><div class="logo-container"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></div>
+        </a><h2 class="location"><a href="#">Module ioctl</a></h2><div class="sidebar-elems"><section><div class="block"><ul><li><a href="#macros">Macros</a></li><li><a href="#constants">Constants</a></li><li><a href="#functions">Functions</a></li></ul></div></section><div id="sidebar-vars" data-name="ioctl" data-ty="mod" data-relpath="./"></div><script defer src="./sidebar-items.js"></script></div></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../../nix/index.html"><img class="rust-logo" src="../../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="main-heading">
+    <h1 class="fqn"><span class="in-band">Module <a href="../../index.html">nix</a>::<wbr><a href="../index.html">sys</a>::<wbr><a class="mod" href="#">ioctl</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../../../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span></h1><span class="out-of-band"><a class="srclink" href="../../../src/nix/sys/ioctl/mod.rs.html#1-147">source</a> · <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Provide helpers for making ioctl system calls</p>
+<p>Currently supports Linux on all architectures. Other platforms welcome!</p>
+<p>This library is pretty low-level and messy. <code>ioctl</code> is not fun.</p>
+<h2 id="what-is-an-ioctl"><a href="#what-is-an-ioctl">What is an <code>ioctl</code>?</a></h2>
+<p>The <code>ioctl</code> syscall is the grab-bag syscall on POSIX systems. Don’t want
+to add a new syscall? Make it an <code>ioctl</code>! <code>ioctl</code> refers to both the syscall,
+and the commands that can be send with it. <code>ioctl</code> stands for “IO control”,
+and the commands are always sent to a file descriptor.</p>
+<p>It is common to see <code>ioctl</code>s used for the following purposes:</p>
+<ul>
+<li>Provide read/write access to out-of-band data related
+to a device such as configuration (for instance, setting
+serial port options)</li>
+<li>Provide a mechanism for performing full-duplex data
+transfers (for instance, xfer on SPI devices).</li>
+<li>Provide access to control functions on a device (for example,
+on Linux you can send commands like pause, resume, and eject
+to the CDROM device.</li>
+<li>Do whatever else the device driver creator thought made most sense.</li>
+</ul>
+<p><code>ioctl</code>s are synchronous system calls and are similar to read and
+write calls in that regard.</p>
+<h2 id="what-does-this-module-support"><a href="#what-does-this-module-support">What does this module support?</a></h2>
+<p>This library provides the <code>ioctl!</code> macro, for binding <code>ioctl</code>s.
+Here’s a few examples of how that can work for SPI under Linux
+from <a href="https://github.com/posborne/rust-spidev">rust-spidev</a>.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attribute">#[<span class="ident">macro_use</span>]</span> <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">nix</span>;
+
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">non_camel_case_types</span>)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">spi_ioc_transfer</span> {
+    <span class="kw">pub</span> <span class="ident">tx_buf</span>: <span class="ident">u64</span>,
+    <span class="kw">pub</span> <span class="ident">rx_buf</span>: <span class="ident">u64</span>,
+    <span class="kw">pub</span> <span class="ident">len</span>: <span class="ident">u32</span>,
+
+    <span class="comment">// optional overrides</span>
+    <span class="kw">pub</span> <span class="ident">speed_hz</span>: <span class="ident">u32</span>,
+    <span class="kw">pub</span> <span class="ident">delay_usecs</span>: <span class="ident">u16</span>,
+    <span class="kw">pub</span> <span class="ident">bits_per_word</span>: <span class="ident">u8</span>,
+    <span class="kw">pub</span> <span class="ident">cs_change</span>: <span class="ident">u8</span>,
+    <span class="kw">pub</span> <span class="ident">pad</span>: <span class="ident">u32</span>,
+}
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">linux</span>)]</span>
+<span class="kw">mod</span> <span class="ident">ioctl</span> {
+    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+
+    <span class="kw">const</span> <span class="ident">SPI_IOC_MAGIC</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="string">&#39;k&#39;</span> <span class="kw">as</span> <span class="ident">u8</span>;
+    <span class="kw">const</span> <span class="ident">SPI_IOC_NR_TRANSFER</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">0</span>;
+    <span class="kw">const</span> <span class="ident">SPI_IOC_NR_MODE</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">1</span>;
+    <span class="kw">const</span> <span class="ident">SPI_IOC_NR_LSB_FIRST</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">2</span>;
+    <span class="kw">const</span> <span class="ident">SPI_IOC_NR_BITS_PER_WORD</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">3</span>;
+    <span class="kw">const</span> <span class="ident">SPI_IOC_NR_MAX_SPEED_HZ</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">4</span>;
+    <span class="kw">const</span> <span class="ident">SPI_IOC_NR_MODE32</span>: <span class="ident">u8</span> <span class="op">=</span> <span class="number">5</span>;
+
+    <span class="macro">ioctl!</span>(<span class="ident">read</span>  <span class="ident">get_mode_u8</span> <span class="ident">with</span> <span class="ident">SPI_IOC_MAGIC</span>, <span class="ident">SPI_IOC_NR_MODE</span>; <span class="ident">u8</span>);
+    <span class="macro">ioctl!</span>(<span class="ident">read</span>  <span class="ident">get_mode_u32</span> <span class="ident">with</span> <span class="ident">SPI_IOC_MAGIC</span>, <span class="ident">SPI_IOC_NR_MODE</span>; <span class="ident">u32</span>);
+    <span class="macro">ioctl!</span>(<span class="ident">write</span> <span class="ident">set_mode_u8</span> <span class="ident">with</span> <span class="ident">SPI_IOC_MAGIC</span>, <span class="ident">SPI_IOC_NR_MODE</span>; <span class="ident">u8</span>);
+    <span class="macro">ioctl!</span>(<span class="ident">write</span> <span class="ident">set_mode_u32</span> <span class="ident">with</span> <span class="ident">SPI_IOC_MAGIC</span>, <span class="ident">SPI_IOC_NR_MODE32</span>; <span class="ident">u32</span>);
+    <span class="macro">ioctl!</span>(<span class="ident">read</span>  <span class="ident">get_lsb_first</span> <span class="ident">with</span> <span class="ident">SPI_IOC_MAGIC</span>, <span class="ident">SPI_IOC_NR_LSB_FIRST</span>; <span class="ident">u8</span>);
+    <span class="macro">ioctl!</span>(<span class="ident">write</span> <span class="ident">set_lsb_first</span> <span class="ident">with</span> <span class="ident">SPI_IOC_MAGIC</span>, <span class="ident">SPI_IOC_NR_LSB_FIRST</span>; <span class="ident">u8</span>);
+    <span class="macro">ioctl!</span>(<span class="ident">read</span>  <span class="ident">get_bits_per_word</span> <span class="ident">with</span> <span class="ident">SPI_IOC_MAGIC</span>, <span class="ident">SPI_IOC_NR_BITS_PER_WORD</span>; <span class="ident">u8</span>);
+    <span class="macro">ioctl!</span>(<span class="ident">write</span> <span class="ident">set_bits_per_word</span> <span class="ident">with</span> <span class="ident">SPI_IOC_MAGIC</span>, <span class="ident">SPI_IOC_NR_BITS_PER_WORD</span>; <span class="ident">u8</span>);
+    <span class="macro">ioctl!</span>(<span class="ident">read</span>  <span class="ident">get_max_speed_hz</span> <span class="ident">with</span> <span class="ident">SPI_IOC_MAGIC</span>, <span class="ident">SPI_IOC_NR_MAX_SPEED_HZ</span>; <span class="ident">u32</span>);
+    <span class="macro">ioctl!</span>(<span class="ident">write</span> <span class="ident">set_max_speed_hz</span> <span class="ident">with</span> <span class="ident">SPI_IOC_MAGIC</span>, <span class="ident">SPI_IOC_NR_MAX_SPEED_HZ</span>; <span class="ident">u32</span>);
+    <span class="macro">ioctl!</span>(<span class="ident">write</span> <span class="ident">spidev_transfer</span> <span class="ident">with</span> <span class="ident">SPI_IOC_MAGIC</span>, <span class="ident">SPI_IOC_NR_TRANSFER</span>; <span class="ident">spi_ioc_transfer</span>);
+    <span class="macro">ioctl!</span>(<span class="ident">write</span> <span class="ident">buf</span> <span class="ident">spidev_transfer_buf</span> <span class="ident">with</span> <span class="ident">SPI_IOC_MAGIC</span>, <span class="ident">SPI_IOC_NR_TRANSFER</span>; <span class="ident">spi_ioc_transfer</span>);
+}
+
+<span class="comment">// doctest workaround</span>
+<span class="kw">fn</span> <span class="ident">main</span>() {}</code></pre></div>
+<p>Spidev uses the <code>_IOC</code> macros that are encouraged (as far as
+<code>ioctl</code> can be encouraged at all) for newer drivers.  Many
+drivers, however, just use magic numbers with no attached
+semantics.  For those, the <code>ioctl!(bad ...)</code> variant should be
+used (the “bad” terminology is from the Linux kernel).</p>
+<h2 id="how-do-i-get-the-magic-numbers"><a href="#how-do-i-get-the-magic-numbers">How do I get the magic numbers?</a></h2>
+<p>For Linux, look at your system’s headers. For example, <code>/usr/include/linxu/input.h</code> has a lot
+of lines defining macros which use <code>_IOR</code>, <code>_IOW</code>, <code>_IOC</code>, and <code>_IORW</code>.  These macros
+correspond to the <code>ior!</code>, <code>iow!</code>, <code>ioc!</code>, and <code>iorw!</code> macros defined in this crate.
+Additionally, there is the <code>ioctl!</code> macro for creating a wrapper around <code>ioctl</code> that is
+somewhat more type-safe.</p>
+<p>Most <code>ioctl</code>s have no or little documentation. You’ll need to scrounge through
+the source to figure out what they do and how they should be used.</p>
+</div></details><h2 id="macros" class="small-section-header"><a href="#macros">Macros</a></h2>
+<div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="macro" href="macro.convert_ioctl_res.html" title="nix::sys::ioctl::convert_ioctl_res macro">convert_ioctl_res</a></div><div class="item-right docblock-short"><p>Convert raw ioctl return value to a Nix result</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="macro" href="macro.io.html" title="nix::sys::ioctl::io macro">io</a></div><div class="item-right docblock-short"><p>Encode an ioctl command that has no associated data.</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="macro" href="macro.ioc.html" title="nix::sys::ioctl::ioc macro">ioc</a></div><div class="item-right docblock-short"><p>Encode an ioctl command.</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="macro" href="macro.ioctl.html" title="nix::sys::ioctl::ioctl macro">ioctl</a></div><div class="item-right docblock-short"><p>Declare a wrapper function around an ioctl.</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="macro" href="macro.ior.html" title="nix::sys::ioctl::ior macro">ior</a></div><div class="item-right docblock-short"><p>Encode an ioctl command that reads.</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="macro" href="macro.iorw.html" title="nix::sys::ioctl::iorw macro">iorw</a></div><div class="item-right docblock-short"><p>Encode an ioctl command that both reads and writes.</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="macro" href="macro.iow.html" title="nix::sys::ioctl::iow macro">iow</a></div><div class="item-right docblock-short"><p>Encode an ioctl command that writes.</p>
+</div></div></div><h2 id="constants" class="small-section-header"><a href="#constants">Constants</a></h2>
+<div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="constant" href="constant.DIRBITS.html" title="nix::sys::ioctl::DIRBITS constant">DIRBITS</a></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left module-item"><a class="constant" href="constant.DIRMASK.html" title="nix::sys::ioctl::DIRMASK constant">DIRMASK</a></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left module-item"><a class="constant" href="constant.DIRSHIFT.html" title="nix::sys::ioctl::DIRSHIFT constant">DIRSHIFT</a></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left module-item"><a class="constant" href="constant.IN.html" title="nix::sys::ioctl::IN constant">IN</a></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left module-item"><a class="constant" href="constant.INOUT.html" title="nix::sys::ioctl::INOUT constant">INOUT</a></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left module-item"><a class="constant" href="constant.NONE.html" title="nix::sys::ioctl::NONE constant">NONE</a></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left module-item"><a class="constant" href="constant.NRBITS.html" title="nix::sys::ioctl::NRBITS constant">NRBITS</a></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left module-item"><a class="constant" href="constant.NRMASK.html" title="nix::sys::ioctl::NRMASK constant">NRMASK</a></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left module-item"><a class="constant" href="constant.NRSHIFT.html" title="nix::sys::ioctl::NRSHIFT constant">NRSHIFT</a></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left module-item"><a class="constant" href="constant.OUT.html" title="nix::sys::ioctl::OUT constant">OUT</a></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left module-item"><a class="constant" href="constant.READ.html" title="nix::sys::ioctl::READ constant">READ</a></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left module-item"><a class="constant" href="constant.SIZEBITS.html" title="nix::sys::ioctl::SIZEBITS constant">SIZEBITS</a></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left module-item"><a class="constant" href="constant.SIZEMASK.html" title="nix::sys::ioctl::SIZEMASK constant">SIZEMASK</a></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left module-item"><a class="constant" href="constant.SIZESHIFT.html" title="nix::sys::ioctl::SIZESHIFT constant">SIZESHIFT</a></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left module-item"><a class="constant" href="constant.SIZE_MASK.html" title="nix::sys::ioctl::SIZE_MASK constant">SIZE_MASK</a></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left module-item"><a class="constant" href="constant.TYPEBITS.html" title="nix::sys::ioctl::TYPEBITS constant">TYPEBITS</a></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left module-item"><a class="constant" href="constant.TYPEMASK.html" title="nix::sys::ioctl::TYPEMASK constant">TYPEMASK</a></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left module-item"><a class="constant" href="constant.TYPESHIFT.html" title="nix::sys::ioctl::TYPESHIFT constant">TYPESHIFT</a></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left module-item"><a class="constant" href="constant.WRITE.html" title="nix::sys::ioctl::WRITE constant">WRITE</a></div><div class="item-right docblock-short"></div></div></div><h2 id="functions" class="small-section-header"><a href="#functions">Functions</a></h2>
+<div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="fn" href="fn.ioc_dir.html" title="nix::sys::ioctl::ioc_dir fn">ioc_dir</a></div><div class="item-right docblock-short"><p>Extracts the “direction” (read/write/none) from an encoded ioctl command.</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="fn" href="fn.ioc_nr.html" title="nix::sys::ioctl::ioc_nr fn">ioc_nr</a></div><div class="item-right docblock-short"><p>Extracts the ioctl number from an encoded ioctl command.</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="fn" href="fn.ioc_size.html" title="nix::sys::ioctl::ioc_size fn">ioc_size</a></div><div class="item-right docblock-short"><p>Extracts the size from an encoded ioctl command.</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="fn" href="fn.ioc_type.html" title="nix::sys::ioctl::ioc_type fn">ioc_type</a></div><div class="item-right docblock-short"><p>Extracts the type from an encoded ioctl command.</p>
+</div></div></div></section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="nix" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.61.0" ></div>
+</body></html>
