@@ -1,10 +1,7 @@
 //! Dumb greedy algorithm.
-use libc::INT_MAX;
-use nix::sys::stat::stat;
-
 use super::Strategy;
 use crate::configuration::{Configuration, Movement};
-use std::{fmt, ptr::null};
+use std::{fmt};
 
 /// Dumb algorithm.
 /// Amongst all possible movements return the one which yields the configuration with the best

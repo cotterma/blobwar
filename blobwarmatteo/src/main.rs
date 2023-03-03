@@ -1,7 +1,7 @@
 extern crate blobwar;
 //use blobwar::board::Board;
 use blobwar::configuration::Configuration;
-use blobwar::strategy::{Greedy, Human, MinMax};
+use blobwar::strategy::{Greedy, Human, MinMax, AlphaBeta};
 use std::time::Instant;
 
 fn main() {
@@ -9,7 +9,7 @@ fn main() {
     let board = Default::default();
     let mut game = Configuration::new(&board);
     let start = Instant::now();
-    game.battle(MinMax(3), MinMax(2));
+    game.battle(MinMax(2), AlphaBeta(5));
     let duration = start.elapsed();
     println!("Time elapsed is: {:?}", duration);
 }

@@ -4,6 +4,10 @@ use std::fmt;
 use super::Strategy;
 use crate::configuration::{Configuration, Movement};
 use crate::shmem::AtomicMove;
+use rayon::iter::ParallelBridge;
+use rayon::prelude::ParallelIterator;
+use itertools::Itertools;
+use itertools::FoldWhile::{Continue, Done};
 
 /// Anytime alpha beta algorithm.
 /// Any time algorithms will compute until a deadline is hit and the process is killed.
@@ -28,6 +32,27 @@ impl fmt::Display for AlphaBeta {
 
 impl Strategy for AlphaBeta {
     fn compute_next_move(&mut self, state: &Configuration) -> Option<Movement> {
-        unimplemented!("implementer alpha beta")
+        return state.movements().max_by_key(|movement: &Movement| nega_alpha_beta(self.0-1, &state.play(movement), i8::MIN, i8::MAX));
     }
+}
+
+fn nega_alpha_beta(depth: u8, state : &Configuration, mut alpha: i8, beta: i8) -> i8 {
+    if depth == 0 || state.movements().peekable().peek().is_none(){
+        return state.value();
+    };
+    return -state.movements().fold_while(i8::MIN, |mut best_value, movement| {
+        let value = nega_alpha_beta(depth - 1, &state.play(&movement), -beta, -alpha);
+        if best_value < value {
+            best_value = value;
+        }
+        if best_value >= beta {
+            Done(beta)
+        }
+        else{
+            if alpha < best_value {
+                alpha = best_value;
+            }
+            Continue(best_value)
+        }
+    }).into_inner();
 }
