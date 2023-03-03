@@ -46,7 +46,7 @@ fn nega_alpha_beta(depth: u8, state : &Configuration, mut alpha: i8, beta: i8) -
             best_value = value;
         }
         if best_value >= beta {
-            Done(beta)
+            Done(best_value)
         }
         else{
             if alpha < best_value {
