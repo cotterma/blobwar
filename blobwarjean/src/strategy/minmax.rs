@@ -14,8 +14,11 @@ impl Strategy for MinMax {
 }
 
 fn nega_max(depth : u8, state : &Configuration) -> i8 {
-    if depth == 0 || state.movements().peekable().peek().is_none(){/*gerer fin de partie*/
+    if depth == 0 || state.game_over(){
         return state.value();
+    }
+    else if state.movements().peekable().peek().is_none(){
+        return -nega_max(depth-1, &state.skip_play());
     }
     else{
         let mut best_value = -127;
