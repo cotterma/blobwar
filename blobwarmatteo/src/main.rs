@@ -9,7 +9,7 @@ fn main() {
     let board = Default::default();
     let mut game = Configuration::new(&board);
     let start = Instant::now();
-    game.battle(MinMax(2), AlphaBeta(5));
+    game.battle(MinMax(3), AlphaBeta(4));
     let duration = start.elapsed();
     println!("Time elapsed is: {:?}", duration);
 }

@@ -13,7 +13,7 @@ impl Strategy for MinMax {
     fn compute_next_move(&mut self, state: &Configuration) -> Option<Movement> {
         let depth:u8 = self.0;
         let player:bool=state.current_player;
-        return state.movements().par_bridge().max_by_key(|movement| minmax_recursif(&state.play(movement), depth-1, player, depth));
+        return state.movements().par_bridge().max_by_key(|movement| minmax_recursif(&state.play(movement), depth-1));
     }   
 }
 
@@ -23,11 +23,14 @@ impl fmt::Display for MinMax {
     }
 }
 
-fn minmax_recursif(state: &Configuration, depth: u8, player:bool, base_depth:u8) -> i8{
-    if depth==0 || state.movements().peekable().peek().is_none(){
+fn minmax_recursif(state: &Configuration, depth: u8) -> i8{
+    if depth==0{
         return state.value();
     }
-    return -state.movements().par_bridge().map(|movement| minmax_recursif(&state.play(&movement), depth-1, player, base_depth)).max().unwrap();
+    else if state.movements().peekable().peek().is_none(){
+        return -minmax_recursif(&state.skip_play(), depth-1);
+    }
+    return -state.movements().par_bridge().map(|movement| minmax_recursif(&state.play(&movement), depth-1)).max().unwrap();
 }
 
 /// Anytime min max algorithm.
