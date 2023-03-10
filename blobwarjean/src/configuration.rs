@@ -245,6 +245,10 @@ impl<'a> Configuration<'a> {
     }
 }
 
+pub fn getHash(conf : &Configuration) -> (u8,u8) {
+    return (blobs[0].0, blobs[1].0);
+}
+
 impl<'a> fmt::Display for Configuration<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "\n  01234567 \n")?;
