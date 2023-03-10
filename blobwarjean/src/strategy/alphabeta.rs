@@ -12,75 +12,78 @@ use crate::shmem::AtomicMove;
 /// This function is intended to be called from blobwar_iterative_deepening.
 pub fn alpha_beta_anytime(state: &Configuration) {
     let mut movement = AtomicMove::connect().expect("failed connecting to shmem");
-    let mut transpo_table = HashMap::new();
-    let mut root = node_init(state);
-    for depth in 1..100 {
+    let tp_cp = HashMap::new();
+    let tp_op = HashMap::new();
+    let mut root = node(*state);
+    root.node_init();
+    for _depth in 1..100 {
         /*let chosen_movement = AlphaBeta(depth).compute_next_move(state);
         movement.store(chosen_movement);*/
-        tree_alpha_beta(root, transpo_table, -127, 127);
-        movement.store(root.child.last().mov);
+        tree_alpha_beta(&mut root, &tp_cp, &tp_op, -127, 127);
+        movement.store(root.childs.last().unwrap().mov);
     }
 }
 
 //structure that intends to memorize the quality of the mouvements
-struct Node{
-    pos : &Configuration,
-    childs : Vec<&Node>,
+struct Node<'a>{
+    pos : Configuration<'a>,
+    childs : Vec<&'a Node<'a>>,
     eva : i8,
     mov : Option<Movement>
 }
 
-fn node_init(state : &Configuration) -> Node {
-    res = Node {state, Vec::new(), 0};
-    for movement in state.movements() {
-        res.childs.push(Node {state.play(movement), Vec::new(), 0, movement});
+impl Node<'_> {
+    fn node_init<'a>(&mut self){
+        for movement in self.pos.movements() {
+            self.childs.push(&Node {pos : self.pos.play(&movement), childs : Vec::new(), 
+                                    eva : 0, mov : Some(movement)});
+        }
     }
-    return res;
+}
+
+fn node(pos : Configuration) -> Node {
+    return Node {pos : pos, childs : Vec::new(), eva : pos.value(), mov : None};
 }
 
 
 // rajoute une couche de noeuds, et calcule leur valeur
-fn expand_tree(mut parent: &Node, mut transpo_table: HashMap((u8,u8), Node),beta : i8) -> i8 {
+fn expand_tree(parent: &mut Node<'_>, transpo_table: &HashMap<(u64,u64), Node>, beta : i8) -> i8 {
     let mut pos;
     let mut res;
     for movement in parent.pos.movements() {
-        pos = parent.pos.play(movement);
-        if(transpo_table.contains_key(pos.getHash())){//on utilse la table de transposition
-            parent.childs.push(transpo_table.get(pos.getHash()));
-            res = parent.childs.last().eva;
-        }
-        else{
-            res = pos.value;
-            parent.childs.push(Node {pos , Vec::new(), res});
-        }
-        if(res >= beta){
+        pos = parent.pos.play(&movement);
+        parent.childs.push(transpo_table.get(&pos.getHash()).unwrap_or(&mut node(pos)));
+        transpo_table.entry(pos.getHash()).or_insert(node(pos));
+        res = parent.childs.last().unwrap().eva;
+        if res >= beta {
             parent.childs.sort_unstable_by_key(|node| node.eva);
             return res;
         }
     }
-    if !parent.childs.get(0) && !parent.pos.game_over(){
+    if parent.childs.is_empty() && !parent.pos.game_over(){
         pos = parent.pos.skip_play();
         res = pos.value();
-        parent.childs.push(Node {pos, Vec::new(), res});
+        parent.childs.push(&node(pos));
         return res;
     }
     parent.childs.sort_unstable_by_key(|node| node.eva);
-    return parent.childs.last().eva;
+    return parent.childs.last().unwrap().eva;
 }
 
-//met à jour les évaluations de l'arbre, avec elagage ab et table de transpostion
+//met à jour les évaluations de l'arbre, avec elagage ab et tables de transpostion
+//on utilise 2 tables, car chaque joueur en a une 
 //renvoie l'évaluation du noeud
 //permet de s'émanciper de depth (car c'est fait implicitement : à chaque appel successif de la 
 //racine on rajoute une couche de profondeur, c'est assez élégant)
-fn tree_alpha_beta(mut root : &Node, mut transpo_table: HashMap((u8,u8), Node)
-                    , mut alpha : i8, mut beta : i8) -> i8 {
-    if !root.childs[0] {//cas feuille de l'arbre précédent
-        return  - expand_tree(root, transpo_table, -alpha);
+fn tree_alpha_beta(root : &mut Node<'_>, tp_cp: &HashMap<(u64,u64), Node>, tp_op: &HashMap<(u64,u64), Node>,
+                    mut alpha : i8, beta : i8) -> i8 {
+    if root.childs.is_empty() {//cas feuille de l'arbre précédent
+        return  - expand_tree(root, tp_op, -alpha);
     }
     else{
         let mut value;
-        for child in root.childs {
-            value = tree_alpha_beta(root, transpo_table, -beta, -alpha);
+        for child in &root.childs {
+            value = tree_alpha_beta(root, tp_op, tp_cp, -beta, -alpha);
             child.eva = value;
             if value >= beta {
                 root.childs.sort_unstable_by_key(|node| node.eva);
@@ -93,7 +96,7 @@ fn tree_alpha_beta(mut root : &Node, mut transpo_table: HashMap((u8,u8), Node)
         }
     }
     root.childs.sort_unstable_by_key(|node| node.eva);
-    return - root.childs.last().eva;
+    return - root.childs.last().unwrap().eva;
 }
 
 /// Alpha - Beta algorithm with given maximum number of recursions.

@@ -153,6 +153,12 @@ impl<'a> Configuration<'a> {
         println!("GAME OVER (red value of {})", value);
     }
 
+    //  give a hash value of the position ; the idea is :
+    //      if we know the player, the position depends solely on the position of the blobs
+    pub fn getHash(&self) -> (u64,u64) {
+        return (self.blobs[0].0, self.blobs[1].0);
+    }
+
     /// Return true if no empty space remains or someone died.
     pub fn game_over(&self) -> bool {
         self.blobs[0].is_empty()
@@ -245,9 +251,6 @@ impl<'a> Configuration<'a> {
     }
 }
 
-pub fn getHash(conf : &Configuration) -> (u8,u8) {
-    return (blobs[0].0, blobs[1].0);
-}
 
 impl<'a> fmt::Display for Configuration<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
