@@ -153,9 +153,9 @@ impl<'a> Configuration<'a> {
         println!("GAME OVER (red value of {})", value);
     }
 
-    //  give a hash value of the position ; the idea is :
-    //      if we know the player, the position depends solely on the position of the blobs
-    pub fn getHash(&self) -> (u64,u64) {
+    ///  give a hash value of the position ; the idea is :
+    ///     if we know the player, the position depends solely on the position of the blobs
+    pub fn get_hash(&self) -> (u64,u64) {
         return (self.blobs[0].0, self.blobs[1].0);
     }
 
