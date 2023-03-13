@@ -12,13 +12,13 @@ use crate::shmem::AtomicMove;
 /// This function is intended to be called from blobwar_iterative_deepening.
 pub fn alpha_beta_anytime(state: &Configuration) {
     let mut movement = AtomicMove::connect().expect("failed connecting to shmem");
-    let mut tp_cp = HashMap::<(u64, u64), i8>::new();
-    let mut tp_op = HashMap::<(u64, u64), i8>::new();
-    let mut root = node(*state);
+    let mut root = node(*state);// optimisation possible here
     root.node_init();
     for _depth in 1..100 {
         /*let chosen_movement = AlphaBeta(depth).compute_next_move(state);
         movement.store(chosen_movement);*/
+        let mut tp_cp = HashMap::<(u64, u64), i8>::new();//necessary to renew at every step
+        let mut tp_op = HashMap::<(u64, u64), i8>::new();
         tree_alpha_beta(&mut root, &mut tp_cp, &mut tp_op, -127, 127);
         movement.store(root.childs.last().unwrap().mov);
     }
@@ -39,6 +39,8 @@ impl Node<'_> {
                                     eva : 0, mov : Some(movement)});
         }
     }
+
+    
 }
 
 fn node(pos : Configuration) -> Node {
