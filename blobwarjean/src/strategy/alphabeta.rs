@@ -11,16 +11,16 @@ use crate::shmem::AtomicMove;
 /// They are therefore run in another process and communicate through shared memory.
 /// This function is intended to be called from blobwar_iterative_deepening.
 pub fn alpha_beta_anytime(state: &Configuration) {
-    let mut movement = AtomicMove::connect().expect("failed connecting to shmem");
+    //let mut movement = AtomicMove::connect().expect("failed connecting to shmem");
     let mut root = node(*state);// optimisation possible here
     root.node_init();
-    for _depth in 1..100 {
+    for _depth in 1..7 {
         /*let chosen_movement = AlphaBeta(depth).compute_next_move(state);
         movement.store(chosen_movement);*/
         let mut tp_cp = HashMap::<(u64, u64), i8>::new();//necessary to renew at every step
         let mut tp_op = HashMap::<(u64, u64), i8>::new();
         tree_alpha_beta(&mut root, &mut tp_cp, &mut tp_op, -127, 127);
-        movement.store(root.childs.last().unwrap().mov);
+        //movement.store(root.childs.last().unwrap().mov);
     }
 }
 
@@ -49,17 +49,13 @@ fn node(pos : Configuration) -> Node {
 
 
 // rajoute une couche de noeuds, et calcule leur valeur
-fn expand_tree(parent: &mut Node<'_>, beta : i8) -> i8 {
+fn expand_tree(parent: &mut Node<'_>) -> i8 {
     let mut pos;
     let mut res;
     for movement in parent.pos.movements() {
         pos = parent.pos.play(&movement);
         parent.childs.push(node(pos));
         res = pos.value();
-        if res >= beta {
-            parent.childs.sort_unstable_by_key(|node| node.eva);
-            return res;
-        }
     }
     if parent.childs.is_empty() && !parent.pos.game_over(){
         pos = parent.pos.skip_play();
@@ -79,7 +75,7 @@ fn expand_tree(parent: &mut Node<'_>, beta : i8) -> i8 {
 fn tree_alpha_beta(root : &mut Node<'_>, tp_cp: &mut HashMap<(u64, u64), i8>, tp_op: &mut HashMap<(u64,u64), i8>,
                     mut alpha : i8, beta : i8) -> i8 {
     if root.childs.is_empty() {//cas feuille de l'arbre précédent
-        return  - expand_tree(root, -alpha);
+        return  - expand_tree(root);
     }
     else{
         let mut value;
