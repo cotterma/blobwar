@@ -24,7 +24,7 @@ impl fmt::Display for MinMax {
 }
 
 fn minmax_recursif(state: &Configuration, depth: u8) -> i8{
-    if depth==0{
+    if depth==0 || state.game_over(){
         return state.value();
     }
     else if state.movements().peekable().peek().is_none(){
