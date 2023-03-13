@@ -116,7 +116,7 @@ impl Strategy for AlphaBeta {
 }
 
 fn nega_alpha_beta(depth: u8, state : &Configuration, mut alpha: i8, beta: i8) -> i8 {
-    if depth == 0 || state.game_over(){
+    if depth == 0{
         return state.value();
     }
     else if state.movements().peekable().peek().is_none(){
@@ -129,12 +129,12 @@ fn nega_alpha_beta(depth: u8, state : &Configuration, mut alpha: i8, beta: i8) -
             value = nega_alpha_beta(depth - 1, &state.play(&movement), -beta, -alpha);
             if best_value < value {
                 best_value = value;
-                if best_value >= beta {
-                    return -best_value;
-                }
-                if alpha < best_value {
-                    alpha = best_value;
-                }
+            }
+            if best_value >= beta {
+                return -best_value;
+            }
+            if alpha < best_value {
+                alpha = best_value;
             }
         }
         return -best_value;// si on gagne de 1, notre adversaire gagne de -1 aka il perd de 1
