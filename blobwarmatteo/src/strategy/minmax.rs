@@ -11,9 +11,13 @@ pub struct MinMax(pub u8);
 
 impl Strategy for MinMax {
     fn compute_next_move(&mut self, state: &Configuration) -> Option<Movement> {
-        let depth:u8 = self.0;
-        let player:bool=state.current_player;
-        return state.movements().par_bridge().max_by_key(|movement| minmax_recursif(&state.play(movement), depth-1));
+        return state.movements().max_by_key(|movement: &Movement| {
+            let next_state:Configuration = state.play(movement);
+            if next_state.game_over(){
+                return 127;
+            }
+            minmax_recursif(&next_state, self.0-1)
+    });
     }   
 }
 

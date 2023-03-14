@@ -32,7 +32,13 @@ impl fmt::Display for AlphaBeta {
 
 impl Strategy for AlphaBeta {
     fn compute_next_move(&mut self, state: &Configuration) -> Option<Movement> {
-        return state.movements().max_by_key(|movement: &Movement| nega_alpha_beta(self.0-1, &state.play(movement), i8::MIN+1, i8::MAX));
+        return state.movements().max_by_key(|movement: &Movement| {
+            let next_state:Configuration = state.play(movement);
+            if next_state.game_over(){
+                return 127;
+            }
+            nega_alpha_beta(self.0-1, &next_state, -127, 127)
+    });
     }
 }
 
@@ -41,9 +47,9 @@ fn nega_alpha_beta(depth: u8, state : &Configuration, mut alpha: i8, beta: i8) -
         return state.value();
     }
     else if state.movements().peekable().peek().is_none(){
-        return -nega_alpha_beta(depth - 1, &state.skip_play(), alpha, beta);
+        return -nega_alpha_beta(depth - 1, &state.skip_play(), -beta, -alpha);
     }
-    return -state.movements().fold_while(i8::MIN+1, |mut best_value, movement| {
+    return -state.movements().fold_while(-127, |mut best_value, movement| {
         let value = nega_alpha_beta(depth - 1, &state.play(&movement), -beta, -alpha);
         if best_value < value {
             best_value = value;
