@@ -10,7 +10,7 @@ fn main(){
     let board = Default::default();
     let mut game = Configuration::new(&board);
     let start = Instant::now();
-    game.battle(MinMax(5), AlphaBeta(5));
+    game.battle(MinMax(3), AlphaBeta(6));
     // let duration = start.elapsed();
     // println!("Time elapsed is: {:?}", duration);
     // let root = BitMapBackend::new("img/perf.png", (640, 480)).into_drawing_area();

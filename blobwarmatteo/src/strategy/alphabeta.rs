@@ -5,9 +5,11 @@ use super::Strategy;
 use crate::configuration::{Configuration, Movement};
 use crate::shmem::AtomicMove;
 use rayon::iter::ParallelBridge;
-use rayon::prelude::ParallelIterator;
+use rayon::prelude::{ParallelIterator, IntoParallelIterator};
 use itertools::Itertools;
 use itertools::FoldWhile::{Continue, Done};
+use crossbeam::atomic::AtomicCell;
+use rayon::slice::ParallelSlice;
 
 /// Anytime alpha beta algorithm.
 /// Any time algorithms will compute until a deadline is hit and the process is killed.
@@ -71,7 +73,7 @@ fn nega_alpha_beta_par(depth: u8, state : &Configuration, mut alpha: i8, mut bet
         return state.value();
     }
     else if state.movements().peekable().peek().is_none(){
-        return -nega_alpha_beta(depth - 1, &state.skip_play(), -beta, -alpha);
+        return -nega_alpha_beta_par(depth - 1, &state.skip_play(), -beta, -alpha);
     }
     return -state.movements().par_bridge().try_fold(|| (-127, alpha, beta),|(mut best_value, mut alpha, mut beta), movement| {
         let value = nega_alpha_beta_par(depth - 1, &state.play(&movement), -beta, -alpha);
@@ -88,4 +90,31 @@ fn nega_alpha_beta_par(depth: u8, state : &Configuration, mut alpha: i8, mut bet
             Ok((best_value, alpha, beta))
         }
     }).map(|res| res.unwrap_or_else(|res| res).0).max().unwrap();
+}
+
+fn nega_alpha_beta_par_better(depth: u8, state : &Configuration, mut alpha: i8, mut beta: i8) -> i8 {
+    if depth == 0 || state.game_over(){
+        return state.value();
+    }
+    else if state.movements().peekable().peek().is_none(){
+        return -nega_alpha_beta_par_better(depth - 1, &state.skip_play(), -beta, -alpha);
+    }
+    let best_value =AtomicCell::new(-127);
+    let alpha_value =AtomicCell::new(alpha);
+    let result = state.movements().par_bridge().find_map_first(|movement| {
+        let value = nega_alpha_beta_par_better(depth - 1, &state.play(&movement), -beta, -alpha_value.load());
+        if best_value.load() < value {
+            best_value.store(value);
+        }
+        if best_value.load() >= beta {
+            Some(best_value.load())
+        }
+        else{
+            if alpha_value.load() < best_value.load() {
+                alpha_value.store(best_value.load());
+            }
+            None
+        }
+    });
+    return -result.unwrap_or_else(|| best_value.load());
 }
