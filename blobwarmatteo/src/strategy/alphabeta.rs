@@ -49,6 +49,30 @@ fn nega_alpha_beta(depth: u8, state : &Configuration, mut alpha: i8, mut beta: i
     else if state.movements().peekable().peek().is_none(){
         return -nega_alpha_beta(depth - 1, &state.skip_play(), -beta, -alpha);
     }
+    return -state.movements().fold_while(-127, |mut best_value, movement| {
+        let value = nega_alpha_beta(depth - 1, &state.play(&movement), -beta, -alpha);
+        if best_value < value {
+            best_value = value;
+        }
+        if best_value >= beta {
+            Done(best_value)
+        }
+        else{
+            if alpha < best_value {
+                alpha = best_value;
+            }
+            Continue(best_value)
+        }
+    }).into_inner();
+}
+
+fn nega_alpha_beta_par(depth: u8, state : &Configuration, mut alpha: i8, mut beta: i8) -> i8 {
+    if depth == 0 || state.game_over(){
+        return state.value();
+    }
+    else if state.movements().peekable().peek().is_none(){
+        return -nega_alpha_beta(depth - 1, &state.skip_play(), -beta, -alpha);
+    }
     return -state.movements().par_bridge().try_fold(|| (-127, alpha, beta),|(mut best_value, mut alpha, mut beta), movement| {
         let value = nega_alpha_beta(depth - 1, &state.play(&movement), -beta, -alpha);
         if best_value < value {
