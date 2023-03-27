@@ -11,7 +11,7 @@ pub struct MinMax(pub u8);
 
 impl Strategy for MinMax {
     fn compute_next_move(&mut self, state: &Configuration) -> Option<Movement> {
-        return state.movements().max_by_key(|movement: &Movement| {
+        return state.movements().par_bridge().max_by_key(|movement: &Movement| {
             let next_state:Configuration = state.play(movement);
             if next_state.game_over(){
                 return 127;

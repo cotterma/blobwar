@@ -32,7 +32,7 @@ impl fmt::Display for AlphaBeta {
 
 impl Strategy for AlphaBeta {
     fn compute_next_move(&mut self, state: &Configuration) -> Option<Movement> {
-        return state.movements().max_by_key(|movement: &Movement| {
+        return state.movements().par_bridge().max_by_key(|movement: &Movement| {
             let next_state:Configuration = state.play(movement);
             if next_state.game_over(){
                 return 127;
@@ -42,26 +42,26 @@ impl Strategy for AlphaBeta {
     }
 }
 
-fn nega_alpha_beta(depth: u8, state : &Configuration, mut alpha: i8, beta: i8) -> i8 {
+fn nega_alpha_beta(depth: u8, state : &Configuration, mut alpha: i8, mut beta: i8) -> i8 {
     if depth == 0 || state.game_over(){
         return state.value();
     }
     else if state.movements().peekable().peek().is_none(){
         return -nega_alpha_beta(depth - 1, &state.skip_play(), -beta, -alpha);
     }
-    return -state.movements().fold_while(-127, |mut best_value, movement| {
+    return -state.movements().par_bridge().try_fold(|| (-127, alpha, beta),|(mut best_value, mut alpha, mut beta), movement| {
         let value = nega_alpha_beta(depth - 1, &state.play(&movement), -beta, -alpha);
         if best_value < value {
             best_value = value;
         }
         if best_value >= beta {
-            Done(best_value)
+            Err((best_value, alpha, beta))
         }
         else{
             if alpha < best_value {
                 alpha = best_value;
             }
-            Continue(best_value)
+            Ok((best_value, alpha, beta))
         }
-    }).into_inner();
+    }).map(|res| res.unwrap_or_else(|res| res).0).max().unwrap();
 }
