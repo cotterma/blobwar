@@ -74,7 +74,7 @@ fn nega_alpha_beta_par(depth: u8, state : &Configuration, mut alpha: i8, mut bet
         return -nega_alpha_beta(depth - 1, &state.skip_play(), -beta, -alpha);
     }
     return -state.movements().par_bridge().try_fold(|| (-127, alpha, beta),|(mut best_value, mut alpha, mut beta), movement| {
-        let value = nega_alpha_beta(depth - 1, &state.play(&movement), -beta, -alpha);
+        let value = nega_alpha_beta_par(depth - 1, &state.play(&movement), -beta, -alpha);
         if best_value < value {
             best_value = value;
         }
