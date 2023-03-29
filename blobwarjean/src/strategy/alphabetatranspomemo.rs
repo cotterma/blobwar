@@ -10,13 +10,13 @@ use crate::shmem::AtomicMove;
 /// They are therefore run in another process and communicate through shared memory.
 /// This function is intended to be called from blobwar_iterative_deepening.
 pub fn alpha_beta_transpo_memo_anytime(state: &Configuration) {
-    //let mut movement = AtomicMove::connect().expect("failed connecting to shmem");
+    let mut movement = AtomicMove::connect().expect("failed connecting to shmem");
     let mut root = init(*state);//we use the tree constructed on the previous iterations
     for _depth in 1..100 {
         let mut tp_cp = HashMap::<(u64, u64), i8>::new();//necessary to renew at every step
         let mut tp_op = HashMap::<(u64, u64), i8>::new();
         tree_alpha_beta(&mut root, &mut tp_cp, &mut tp_op, -127, 127);
-        //movement.store(root.childs.last().unwrap().mov);
+        movement.store(root.childs.last().unwrap().mov);
     }
 }
 
@@ -26,7 +26,7 @@ struct Node<'a>{
     childs : Vec<Node<'a>>,
     eva : i8,
     mov : Option<Movement>,
-    ite : Vec<Movement>
+    rest : Vec<Node<'a>>
 }
 
 /*struct Eva {
@@ -49,7 +49,7 @@ fn node(pos : Configuration, mov : Option<Movement>) -> Node {
     for m in pos.movements() {
         i.push(m);
     }
-    return Node {pos : pos, childs : Vec::new(), eva : pos.value(), mov : mov, ite : i};
+    return Node {pos : pos, childs : Vec::new(), eva : pos.value(), mov : mov, rest : Vec::new()};
 }
 
 fn init(pos : Configuration) -> Node{
@@ -57,30 +57,32 @@ fn init(pos : Configuration) -> Node{
     for m in pos.movements() {
         i.push(m);
     }
-    return Node {pos : pos, childs : Vec::new(), eva : 0, mov : None, ite : i};
+    return Node {pos : pos, childs : Vec::new(), eva : 0, mov : None, rest : Vec::new()};
 }
 
 // rajoute une couche de noeuds, et calcule leur valeur
 fn expand_tree(parent: &mut Node<'_>, beta : i8) -> i8 {
     let mut pos;
-    let mut res;
+    let mut res=0;
     for movement in parent.pos.movements() {
         pos = parent.pos.play(&movement);
-        parent.childs.push(node(pos, Some(movement)));
-        res = pos.value();
+        parent.rest.push(node(pos, Some(movement)));
+    }
+    if parent.rest.is_empty() && !parent.pos.game_over(){
+        pos = parent.pos.skip_play();
+        parent.childs.push(node(pos, None));
+    }
+    let n = parent.rest.len();
+    for child in parent.rest.drain(0..n){
+        res = child.eva;
+        parent.childs.push(child);
         if res >= beta {
             parent.childs.sort_unstable_by_key(|node| -node.eva);
-            return parent.childs.get(0).unwrap().eva;//à refaire
+            return res;
         }
     }
-    if parent.childs.is_empty() && !parent.pos.game_over(){
-        pos = parent.pos.skip_play();
-        res = pos.value();
-        parent.childs.push(node(pos, None));
-        return res;
-    }
     parent.childs.sort_unstable_by_key(|node| -node.eva);
-    return parent.childs.get(0).unwrap().eva;//à refaire
+    return res;
 }
 
 //met à jour les évaluations de l'arbre, avec elagage ab et tables de transpostion
@@ -94,47 +96,60 @@ fn tree_alpha_beta(root : &mut Node<'_>, tp_cp: &mut HashMap<(u64, u64), i8>, tp
         return  - expand_tree(root, -alpha);
     }
     else{
+        let mut res = -64;
         let mut value;
         for child in (&mut root.childs).iter_mut() {
+            //tables de transposition
             if tp_cp.contains_key(&child.pos.get_hash()){
                 value = *(tp_cp.get(&child.pos.get_hash()).unwrap());
             }
             else{
-                value = tree_alpha_beta(child, tp_op, tp_cp, -beta, -alpha);
+                //l'appel recursif !
+                value = -tree_alpha_beta(child, tp_op, tp_cp, -beta, -alpha);
                 tp_cp.insert(child.pos.get_hash(), value);
             }
+            //mise à jour de la valeur de l'enfant
             child.eva = value;
             if value >= beta {
+                //coupure beta
                 root.childs.sort_unstable_by_key(|node| -node.eva);
-                return -value;
+                return value;
             }
             if alpha < value {
                 alpha = value;
+            }
+            if res < value{
+                res = value;
             }
             
         }
-        for pmove in &root.ite {
-            let mut child = node(root.pos.play(&pmove), Some(*pmove));
+        let n = root.rest.len();
+        for mut child in (&mut root.rest).drain(0..n) {
             if tp_cp.contains_key(&child.pos.get_hash()){
                 value = *(tp_cp.get(&child.pos.get_hash()).unwrap());
             }
             else{
-                value = tree_alpha_beta(&mut child, tp_op, tp_cp, -beta, -alpha);
+                value = -tree_alpha_beta(&mut child, tp_op, tp_cp, -beta, -alpha);
                 tp_cp.insert(child.pos.get_hash(), value);
             }
             child.eva = value;
-            root.childs.push(child);
             if value >= beta {
                 root.childs.sort_unstable_by_key(|node| -node.eva);
                 return -value;
             }
             if alpha < value {
                 alpha = value;
-            }       
+            }
+            if res < value{
+                res = value;
+            }
+            root.childs.push(child);
+            
         }
+        root.childs.sort_unstable_by_key(|node| -node.eva);//à refaire
+        return res;
     }
-    root.childs.sort_unstable_by_key(|node| -node.eva);//à refaire
-    return - root.childs.get(0).unwrap().eva;
+    
 }
 
 /// Alpha - Beta algorithm with given maximum number of recursions.
@@ -149,11 +164,11 @@ impl fmt::Display for AlphaBetaTranspoMemo {
 impl Strategy for AlphaBetaTranspoMemo {
     fn compute_next_move(&mut self, state: &Configuration) -> Option<Movement> {
         let mut root = init(*state);// optimisation possible here
-        for _depth in 1..self.0 {
+        for _depth in 0..self.0 {
             let mut tp_cp = HashMap::<(u64, u64), i8>::new();//necessary to renew at every step
             let mut tp_op = HashMap::<(u64, u64), i8>::new();
             tree_alpha_beta(&mut root, &mut tp_cp, &mut tp_op, -127, 127);
         }
-        return root.childs.last().unwrap().mov;
+        return root.childs.get(0).unwrap().mov;
     }
 }

@@ -4,6 +4,8 @@ use std::collections::HashMap;
 use super::Strategy;
 use crate::configuration::{Configuration, Movement};
 use crate::shmem::AtomicMove;
+use rayon::iter::ParallelBridge;
+use rayon::prelude::ParallelIterator;
 
 /// Anytime alpha beta algorithm.
 /// Any time algorithms will compute until a deadline is hit and the process is killed.
@@ -28,10 +30,8 @@ impl fmt::Display for AlphaBetaTranspo {
 
 impl Strategy for AlphaBetaTranspo {
     fn compute_next_move(&mut self, state: &Configuration) -> Option<Movement> {
-        let mut tp_cp = HashMap::<(u64, u64), i8>::new();
-        let mut tp_op = HashMap::<(u64, u64), i8>::new();
-        return state.movements().max_by_key(|movement: &Movement| 
-            nega_alpha_beta_transpo(self.0-1, &state.play(movement), &mut tp_cp, &mut tp_op, -127, 127));
+        return state.movements().par_bridge().max_by_key(|movement: &Movement| 
+            nega_alpha_beta_transpo(self.0-1, &state.play(movement), &mut HashMap::<(u64, u64), i8>::new(), &mut HashMap::<(u64, u64), i8>::new(), -127, 127));
     }
 }
 

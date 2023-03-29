@@ -23,8 +23,6 @@ pub mod alphabetatranspomemo;
 pub use self::alphabetatranspomemo::{alpha_beta_transpo_memo_anytime, AlphaBetaTranspoMemo};
 pub mod alphabetatranspo;
 pub use self::alphabetatranspo::{alpha_beta_transpo_anytime, AlphaBetaTranspo};
-pub mod alphabetatranspokm;
-pub use self::alphabetatranspokm::{alpha_beta_transpo_km_anytime, AlphaBetaTranspoKM};
 pub mod iterative;
 pub use self::iterative::IterativeDeepening;
 pub use self::iterative::IterativeStrategy;
