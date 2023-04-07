@@ -5,11 +5,10 @@ use super::Strategy;
 use crate::configuration::{Configuration, Movement};
 use crate::shmem::AtomicMove;
 use rayon::iter::ParallelBridge;
-use rayon::prelude::{ParallelIterator, IntoParallelIterator};
+use rayon::prelude::{ParallelIterator};
 use itertools::Itertools;
 use itertools::FoldWhile::{Continue, Done};
 use crossbeam::atomic::AtomicCell;
-use rayon::slice::ParallelSlice;
 
 /// Anytime alpha beta algorithm.
 /// Any time algorithms will compute until a deadline is hit and the process is killed.

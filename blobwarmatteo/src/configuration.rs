@@ -5,6 +5,7 @@ use super::strategy::Strategy;
 use serde_derive::{Deserialize, Serialize};
 use std::fmt;
 use std::iter::once;
+use std::time::Instant;
 use term;
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq)]
@@ -122,7 +123,10 @@ impl<'a> Configuration<'a> {
     }
 
     /// Play a match between the given players starting from current `Configuration`.
-    pub fn battle<T: Strategy, U: Strategy>(&mut self, mut player_one: T, mut player_two: U) {
+    pub fn battle<T: Strategy, U: Strategy>(&mut self, mut player_one: T, mut player_two: U) -> (Vec<u32>, Vec<f64>)  {
+        let mut times = Vec::new();
+        let mut perfs = Vec::new();
+        let mut time:u32 = 1;
         while !self.game_over() {
             println!(
                 "{} player's turn (he is losing by {} before playing)",
@@ -130,10 +134,15 @@ impl<'a> Configuration<'a> {
                 self.value()
             );
             println!("{}", self);
+            times.push(time);
+            time=time+1;
             let play_attempt = if self.current_player {
                 player_two.compute_next_move(self)
             } else {
-                player_one.compute_next_move(self)
+                let perf = Instant::now();
+                let movement = player_one.compute_next_move(self);
+                perfs.push(perf.elapsed().as_secs_f64());
+                movement
             };
             if let Some(ref next_move) = play_attempt {
                 assert!(self.check_move(next_move));
@@ -151,6 +160,7 @@ impl<'a> Configuration<'a> {
         }
         println!("{}", self);
         println!("GAME OVER (red value of {})", value);
+        (times,perfs)
     }
 
     /// Return true if no empty space remains or someone died.

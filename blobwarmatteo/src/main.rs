@@ -2,43 +2,27 @@ extern crate blobwar;
 //use blobwar::board::Board;
 use blobwar::configuration::Configuration;
 use blobwar::strategy::{Greedy, Human, MinMax, AlphaBeta};
-use std::time::Instant;
-use plotters::prelude::*;
+extern crate gnuplot;
+use gnuplot::{Caption, Color, Figure};
+
 
 fn main(){
-    //let board = Board::load("x").expect("failed loading board");
-    let board = Default::default();
-    let mut game = Configuration::new(&board);
-    let start = Instant::now();
-    game.battle(MinMax(3), AlphaBeta(6));
-    // let duration = start.elapsed();
-    // println!("Time elapsed is: {:?}", duration);
-    // let root = BitMapBackend::new("img/perf.png", (640, 480)).into_drawing_area();
-    // root.fill(&WHITE)?;
-    // let mut chart = ChartBuilder::on(&root)
-    //     .caption("y=x^2", ("sans-serif", 50).into_font())
-    //     .margin(5)
-    //     .x_label_area_size(30)
-    //     .y_label_area_size(30)
-    //     .build_cartesian_2d(-1f32..1f32, -0.1f32..1f32)?;
-
-    // chart.configure_mesh().draw()?;
-
-    // chart
-    //     .draw_series(LineSeries::new(
-    //         (-50..=50).map(|x| x as f32 / 50.0).map(|x| (x, x * x)),
-    //         &RED,
-    //     ))?
-    //     .label("y = x^2")
-    //     .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
-
-    // chart
-    //     .configure_series_labels()
-    //     .background_style(&WHITE.mix(0.8))
-    //     .border_style(&BLACK)
-    //     .draw()?;
-
-    // root.present()?;
-
-    // Ok(())
+    let n = 10;
+    let mut average_on_n:f64 = 0.0;
+    for i in 0..n{
+        let board = Default::default();
+        let mut game = Configuration::new(&board);
+        let (times, perfs) = game.battle(MinMax(3), AlphaBeta(3));
+        // println!("{:?}", times);
+        // println!("{:?}", perfs);
+        let average = perfs.iter().fold(0 as f64, |acc, x| acc+x) / times.last().unwrap().to_owned() as f64;
+        average_on_n = average_on_n + average
+        // println!("Average time taken for player_two to find a movement in this game : {}", average);
+        // let mut fg = Figure::new();
+        // fg.axes2d()
+        //     .lines(&times, &perfs, &[Caption("Curve"), Color("blue")]);
+        // fg.show().unwrap();
+    }
+    average_on_n = average_on_n / n as f64;
+    println!("Average time taken for player_two to find a movement in {} games : {}", n, average_on_n);
 }
