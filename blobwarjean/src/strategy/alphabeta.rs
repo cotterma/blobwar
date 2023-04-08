@@ -74,7 +74,7 @@ fn nega_alpha_beta_para(depth: u8, state : &Configuration, mut alpha: i8, beta: 
         return -state.movements().par_bridge().map(|movement| state.play(&movement).value()).max().unwrap();
     }
     else if state.movements().peekable().peek().is_none(){
-        return -nega_alpha_beta(depth-1, &state.skip_play(), -beta, -alpha);
+        return -nega_alpha_beta_para(depth-1, &state.skip_play(), -beta, -alpha);
     }
     else{
         let mut best_value = -127;
