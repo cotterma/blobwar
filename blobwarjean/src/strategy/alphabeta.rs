@@ -3,6 +3,7 @@ use std::fmt;
 use super::Strategy;
 use crate::configuration::{Configuration, Movement};
 use crate::shmem::AtomicMove;
+use nix::sys::stat::stat;
 use rayon::iter::ParallelBridge;
 use rayon::iter::ParallelIterator;
 
@@ -41,7 +42,7 @@ impl Strategy for AlphaBeta {
 }
 
 fn nega_alpha_beta(depth: u8, state : &Configuration, mut alpha: i8, beta: i8) -> i8 {
-    if depth == 0{
+    if depth == 0 || state.game_over(){
         return state.value();
     }
     else if state.movements().peekable().peek().is_none(){
