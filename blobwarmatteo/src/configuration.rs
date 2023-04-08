@@ -134,11 +134,11 @@ impl<'a> Configuration<'a> {
                 self.value()
             );
             println!("{}", self);
-            times.push(time);
-            time=time+1;
             let play_attempt = if self.current_player {
                 player_two.compute_next_move(self)
             } else {
+                times.push(time);
+                time=time+1;
                 let perf = Instant::now();
                 let movement = player_one.compute_next_move(self);
                 perfs.push(perf.elapsed().as_secs_f64());
