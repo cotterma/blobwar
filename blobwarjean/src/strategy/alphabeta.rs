@@ -3,6 +3,7 @@ use std::fmt;
 use super::Strategy;
 use crate::configuration::{Configuration, Movement};
 use crate::shmem::AtomicMove;
+use nix::sys::stat::stat;
 use rayon::iter::ParallelBridge;
 use rayon::iter::ParallelIterator;
 use itertools::Itertools;
@@ -54,7 +55,7 @@ impl Strategy for AlphaBeta {
 }
 
 fn nega_alpha_beta(depth: u8, state : &Configuration, mut alpha: i8, beta: i8) -> i8 {
-    if depth == 0{
+    if depth == 0 || state.game_over(){
         return state.value();
     }
     else if state.movements().peekable().peek().is_none(){
@@ -80,7 +81,7 @@ fn nega_alpha_beta(depth: u8, state : &Configuration, mut alpha: i8, beta: i8) -
 }
 
 fn nega_alpha_beta_para(depth: u8, state : &Configuration, mut alpha: i8, beta: i8) -> i8 {
-    if depth == 0{
+    if depth == 0 || state.game_over(){
         return state.value();
     }
     else if depth == 1 {//le point parallèle : on fait un test pour voir s'il est préférable d'utiliser
@@ -106,7 +107,7 @@ fn nega_alpha_beta_para(depth: u8, state : &Configuration, mut alpha: i8, beta: 
         }
     }
     else if state.movements().peekable().peek().is_none(){
-        return -nega_alpha_beta(depth-1, &state.skip_play(), -beta, -alpha);
+        return -nega_alpha_beta_para(depth-1, &state.skip_play(), -beta, -alpha);
     }
     else{
         let mut best_value = -127;

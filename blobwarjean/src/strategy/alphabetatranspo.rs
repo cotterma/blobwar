@@ -30,14 +30,19 @@ impl fmt::Display for AlphaBetaTranspo {
 
 impl Strategy for AlphaBetaTranspo {
     fn compute_next_move(&mut self, state: &Configuration) -> Option<Movement> {
-        return state.movements().par_bridge().max_by_key(|movement: &Movement| 
-            nega_alpha_beta_transpo(self.0-1, &state.play(movement), &mut HashMap::<(u64, u64), i8>::new(), &mut HashMap::<(u64, u64), i8>::new(), -127, 127));
+        return state.movements().par_bridge().max_by_key(|movement: &Movement| {
+            let next_state:Configuration = state.play(movement);
+            if next_state.game_over(){
+                return 127;
+            }
+            nega_alpha_beta_transpo(self.0-1, &state.play(movement), &mut HashMap::<(u64, u64), i8>::new(), &mut HashMap::<(u64, u64), i8>::new(), -127, 127)
+        });
     }
 }
 
 fn nega_alpha_beta_transpo(depth: u8, state : &Configuration, tp_cp: &mut HashMap<(u64, u64), i8>, tp_op: &mut HashMap<(u64,u64), i8>,
     mut alpha: i8, beta: i8) -> i8 {
-    if depth == 0{
+    if depth == 0 || state.game_over(){
         return state.value();
     }
     else if state.movements().peekable().peek().is_none(){
