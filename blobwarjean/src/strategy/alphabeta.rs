@@ -30,8 +30,22 @@ impl fmt::Display for AlphaBeta {
 
 impl Strategy for AlphaBeta {
     fn compute_next_move(&mut self, state: &Configuration) -> Option<Movement> {
-        return state.movements().max_by_key(|movement: &Movement| 
-            nega_alpha_beta_para(self.0-1, &state.play(movement), -127, 127));
+        let mut bestmovement = None;
+        let mut bestvalue = -127;
+        let mut value;
+        let mut alpha = -127;
+        for movement in state.movements(){
+            value = nega_alpha_beta(self.0-1, &state.play(&movement), -127, 127);
+            //value = nega_alpha_beta_para(self.0-1, &state.play(&movement), -127, 127);
+            if value > bestvalue {
+                bestvalue = value;
+                bestmovement = Some(movement);
+                if bestvalue > alpha {
+                    alpha = bestvalue;
+                }
+            }
+        }
+        return bestmovement;
     }
 }
 

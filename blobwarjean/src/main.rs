@@ -12,7 +12,7 @@ fn main() {
     let board = Default::default();
     let mut game = Configuration::new(&board);
     let start = Instant::now();
-    game.battle(AlphaBetaTranspo(5), AlphaBeta(5));
+    game.battle(AlphaBeta(5), AlphaBeta(5));
     let duration = start.elapsed();
     println!("Time elapsed is: {:?}", duration);
 }
