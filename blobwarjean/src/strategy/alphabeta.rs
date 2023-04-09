@@ -84,11 +84,14 @@ fn nega_alpha_beta_para(depth: u8, state : &Configuration, mut alpha: i8, beta: 
     if depth == 0 || state.game_over(){
         return state.value();
     }
+    else if state.movements().peekable().peek().is_none(){
+        return -nega_alpha_beta_para(depth-1, &state.skip_play(), -beta, -alpha);
+    }
     else if depth == 1 {//le point parallèle : on fait un test pour voir s'il est préférable d'utiliser
         //un minmax ou un code plus complexe qui permet des coupes
         //le test se base sur le fait que les bons coups "greedy" font gagner 5 blobs en moyenne
-        if state.value() <= alpha + 5 {
-            let best_value =AtomicCell::new(-127);
+        if 5-state.value() >= beta {
+            let best_value =AtomicCell::new(127);
             state.movements().par_bridge().for_each(|movement|
                 {
                     let value = state.play(&movement).value();
@@ -100,14 +103,11 @@ fn nega_alpha_beta_para(depth: u8, state : &Configuration, mut alpha: i8, beta: 
                     }
                 }
             );
-            return best_value.load();
+            return -best_value.load();
         }
         else{
-            return -state.movements().par_bridge().map(|movement| state.play(&movement).value()).max().unwrap();
+            return -state.movements().par_bridge().map(|movement| state.play(&movement).value()).max().unwrap_or(-state.value());
         }
-    }
-    else if state.movements().peekable().peek().is_none(){
-        return -nega_alpha_beta_para(depth-1, &state.skip_play(), -beta, -alpha);
     }
     else{
         let mut best_value = -127;

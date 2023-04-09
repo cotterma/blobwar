@@ -11,13 +11,7 @@ use gnuplot::{Caption, Color, Figure, AxesCommon};
 fn main() {
     let board = Default::default();
     let mut game = Configuration::new(&board);
-<<<<<<< HEAD
-    let start = Instant::now();
-    game.battle(AlphaBeta(5), AlphaBeta(5));
-    let duration = start.elapsed();
-    println!("Time elapsed is: {:?}", duration);
-=======
-    let (times, perfs) = game.battle(AlphaBetaTranspo(5), MinMax(5));
+    let (times, perfs) = game.battle(AlphaBeta(5), AlphaBetaTranspo(5));
     // println!("{:?}", times);
     // println!("{:?}", perfs);
     // let average = perfs.iter().fold(0 as f64, |acc, x| acc+x) / times.last().unwrap().to_owned() as f64;
@@ -28,5 +22,4 @@ fn main() {
         .points(&times, &perfs, &[Caption("Computation time"), Color("blue")]);
     fg.set_title("AlphaBetaTranspoMem(5) fighting each others, computation time(move number)");
     fg.show().unwrap();
->>>>>>> refs/remotes/origin/main
 }

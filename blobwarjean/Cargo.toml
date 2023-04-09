@@ -16,11 +16,8 @@ serde_derive="*"
 serde="*"
 serde_json="*"
 rayon = "1.6.1"
-<<<<<<< HEAD
-crossbeam = "0.8.2"
-=======
 gnuplot = "0.0.37"
+crossbeam = "0.8.2"
 
->>>>>>> refs/remotes/origin/main
 [target.'cfg(unix)'.dependencies]
 nix="0.6"
