@@ -36,7 +36,7 @@ impl Strategy for AlphaBeta {
             if next_state.game_over(){
                 return 127;
             }
-            nega_alpha_beta_para(self.0-1, &next_state, -127, 127)
+            nega_alpha_beta(self.0-1, &next_state, -127, 127)
         });
     }
 }

@@ -14,7 +14,7 @@ pub struct MinMax(pub u8);
 
 impl Strategy for MinMax {
     fn compute_next_move(&mut self, state: &Configuration) -> Option<Movement> {
-        return state.movements().max_by_key(|movement: &Movement| {
+        return state.movements().par_bridge().max_by_key(|movement: &Movement| {
             let next_state:Configuration = state.play(movement);
             if next_state.game_over(){
                 return 127;
@@ -37,7 +37,7 @@ fn minmax_recursif(depth: u8, state: &Configuration) -> i8{
     else if state.movements().peekable().peek().is_none(){
         return -minmax_recursif(depth-1, &state.skip_play());
     }
-    return -state.movements().map(|movement| minmax_recursif(depth-1, &state.play(&movement))).max().unwrap();
+    return -state.movements().par_bridge().map(|movement| minmax_recursif(depth-1, &state.play(&movement))).max().unwrap();
 }
 
 fn bigpower(depth: u8, state : &Configuration) -> i8 {
