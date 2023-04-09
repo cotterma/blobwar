@@ -5,6 +5,10 @@ use crate::configuration::{Configuration, Movement};
 use crate::shmem::AtomicMove;
 use rayon::iter::ParallelBridge;
 use rayon::iter::ParallelIterator;
+use itertools::Itertools;
+use crossbeam::atomic::AtomicCell;
+use rayon::prelude::*;
+
 
 
 /// Anytime alpha beta algorithm.
@@ -74,12 +78,32 @@ fn nega_alpha_beta(depth: u8, state : &Configuration, mut alpha: i8, beta: i8) -
         return -best_value;// si on gagne de 1, notre adversaire gagne de -1 aka il perd de 1
     }
 }
+
 fn nega_alpha_beta_para(depth: u8, state : &Configuration, mut alpha: i8, beta: i8) -> i8 {
     if depth == 0{
         return state.value();
     }
-    else if depth == 1 {
-        return -state.movements().par_bridge().map(|movement| state.play(&movement).value()).max().unwrap();
+    else if depth == 1 {//le point parallèle : on fait un test pour voir s'il est préférable d'utiliser
+        //un minmax ou un code plus complexe qui permet des coupes
+        //le test se base sur le fait que les bons coups "greedy" font gagner 5 blobs en moyenne
+        if state.value() <= alpha + 5 {
+            let best_value =AtomicCell::new(-127);
+            state.movements().par_bridge().for_each(|movement|
+                {
+                    let value = state.play(&movement).value();
+                    if best_value.load() < value {
+                        best_value.store(value);
+                        if best_value.load() >= beta {
+                            return;
+                        }
+                    }
+                }
+            );
+            return best_value.load();
+        }
+        else{
+            return -state.movements().par_bridge().map(|movement| state.play(&movement).value()).max().unwrap();
+        }
     }
     else if state.movements().peekable().peek().is_none(){
         return -nega_alpha_beta(depth-1, &state.skip_play(), -beta, -alpha);
